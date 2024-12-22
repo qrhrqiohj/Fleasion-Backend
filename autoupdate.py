@@ -14,7 +14,7 @@ for package in requirements:
         subprocess.check_call([ "pip", "install", package ])
     os.system('cls')
 
-
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "../main.py")
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "../storage/settings.json")
-subprocess.run(["python", "main.py"])
+
+subprocess.run(["python", "main.py"], cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
