@@ -1,1 +1,1 @@
-input("hi")
+test = input("hi")
