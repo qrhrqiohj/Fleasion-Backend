@@ -95,7 +95,7 @@ curl -sSL -k -o "%~dp0storage\autoupdate.py" https://github.com/qrhrqiohj/Fleasi
 :launch
 %drive%
 cd %dir%\storage
-:cls
+cls
 python autoupdate.py
 if %errorlevel% NEQ 0 goto error
 set finished=True
