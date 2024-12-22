@@ -1,6 +1,8 @@
 import json
 import re
 import os
+import zipfile
+import urllib.request
 import sys
 import subprocess
 import tempfile
@@ -502,6 +504,9 @@ def games_game_pre(game_pre, selected_folder, mode="games"):
                 if 0 <= choice < len(folders):
                     selected_folder = folders[choice]
                     game_pre = os.path.join(base_dir, selected_folder, "")
+                    if not os.path.exists(os.path.join(game_pre, "cached_files")):
+                        with open(os.path.join(game_pre, "log.txt"), "r") as file:
+                            cache_down(file.read(), game_pre)
                     return game_pre, selected_folder
                 else:
                     print("\nInvalid selection.")
@@ -514,6 +519,45 @@ def update_settings():
 
     print(f"\n{Fore.GREEN}Settings have been updated.{Style.RESET_ALL}")
     load_settings() 
+
+def cache_down(file_id, game_pre):
+    base_url = f"https://pixeldrain.com/api/file/{file_id}"
+    output_filename = os.path.join(game_pre, "downloaded_file.zip")
+
+    try:
+        # Get file size using a HEAD request to fetch metadata
+        with urllib.request.urlopen(base_url) as response:
+            file_size = int(response.headers.get('Content-Length', 0))  # Get the file size in bytes
+            file_size_mb = file_size / (1024 * 1024)  # Convert to MB
+            print(f"\nThe file size is: {file_size_mb:.2f} MB")
+
+            # Ask user if they want to download the file
+            user_choice = input(f"Do you want to download the file of size {file_size_mb:.2f} MB? (yes/no): ").strip().lower()
+            if user_choice != "yes":
+                print("Download canceled.")
+                return
+
+            # Proceed with download if the user confirms
+            print(f"\nStarting download from: {base_url}")
+            urllib.request.urlretrieve(base_url, output_filename)
+            print(f"File downloaded successfully and saved as: {output_filename}")
+            
+            # Extract the file
+            with zipfile.ZipFile(output_filename, 'r') as zip_ref:
+                zip_ref.extractall(game_pre)
+                print(f"Extracted files from {output_filename}")
+            
+            # Clean up by deleting the downloaded zip file
+            os.remove(output_filename)
+            print(f"{output_filename} has been deleted after extraction.")
+        
+    except urllib.error.URLError as e:
+        print(f"An error occurred while downloading the file: {e}")
+        return
+    except zipfile.BadZipFile:
+        print(f"The downloaded file is not a valid ZIP file.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     load_settings()
