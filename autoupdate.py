@@ -15,6 +15,6 @@ for package in requirements:
     os.system('cls')
 
 
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "main.py")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "storage\settings.json")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "../main.py")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "../storage/settings.json")
 subprocess.run(["python", "main.py"])
