@@ -1,80 +1,112 @@
-import urllib.request
-import subprocess
-import os
-import zipfile
-import json
-import shutil
+@echo off
+: fleasion by @cro.p, rewrite by @8ar
+: distributed in https://discord.com/invite/fleasion
+: https://github.com/CroppingFlea479/Fleasion
+: script base by @8ar and modified by @3tcy
 
-with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
-    requirements = response.read().decode('utf-8').splitlines()
+: Allows symbols like '&' in variables if quoted
+setlocal enableDelayedExpansion
 
-for package in requirements:
-    try:
-        subprocess.check_call([ "pip", "show", package ])
-        print(f"{package} is installed.")
-    except subprocess.CalledProcessError:
-        print(f"{package} is NOT installed. Installing...")
-        subprocess.check_call([ "pip", "install", package ])
-    os.system('cls')
+: No point of launching Fleasion if Roblox itself doesn't support the operating system
+for /f "tokens=2 delims=[]" %%a in ('ver') do set ver=%%a
+for /f "tokens=2,3,4 delims=. " %%a in ("%ver%") do set v=%%a.%%b
+if "%v%"=="10.0" goto setdrive
+if "%v%"=="6.3" goto setdrive
+goto unsupported
 
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/run.bat", "../run.bat")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "../main.py")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "../storage/settings.json")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/cached_files_downloader.py", "../storage/cached_files_downloader.py")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/autoupdate.py", "../storage/autoupdate.py")
+: Change partition to the one where the run script is located if it's different
+:setdrive
+set dir=%~dp0 >nul 
+: ^ will error if finds special symbols, ignore it
+set drive=%dir:~0,2%
+if %drive% NEQ "C:" C:
+set dir="%~dp0"
+cd %temp%
 
-json_url = "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/CLOG"
+: Curl isn't built into W10 <1809
+curl
+if %errorlevel%==9009 (
+    if not exist "%~dp0storage\curl.exe" (
+        cls
+        powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/fleasion/Fleasion/raw/main/curl.exe' -OutFile '%~dp0storage\curl.exe' -UseBasicParsing > $null" 
+    )
+    xcopy "%~dp0storage\curl.exe" "%temp%\curl.exe" >nul
 
-def download_file(url, filename):
-    try:
-        urllib.request.urlretrieve(url, filename)
-        print(f"Downloaded: {filename}")
-    except Exception as e:
-        print(f"Error downloading {filename}: {e}")
+)
+cls
 
-def unzip_file(zip_file, extract_to):
-    try:
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
-        print(f"Unzipped to: {extract_to}")
-    except Exception as e:
-        print(f"Error unzipping {zip_file}: {e}")
+: Fleasion requires Python >=3.12
+:run
+cls
+python --version >nul
+if %errorlevel%==9009 goto py
+set pythonIsInstalled=True
+reg Query "HKLM\SOFTWARE\Python\PythonCore\3.13" /v "SysVersion" | find "3.13.0" || set pythonIsInstalled=False 
+reg Query "HKCU\SOFTWARE\Python\PythonCore\3.13" /v "SysVersion" | find "3.13.0" || set pythonIsInstalled=False 
+cls
+if pythonIsInstalled==False goto py
+goto pip
 
-def delete_file_or_directory(path):
-    try:
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-            print(f"Deleted directory: {path}")
-        else:
-            os.remove(path)
-            print(f"Deleted file: {path}")
-    except Exception as e:
-        print(f"Error deleting {path}: {e}")
+:py
+cls
+echo Downloading python...
+curl -SL -k -o python-installer.exe https://www.python.org/ftp/python/3.13.1/python-3.13.1-amd64.exe --ssl-no-revoke
+echo Installing..
+python-installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0 Include_doc=0
+del python-installer.exe
 
-response = urllib.request.urlopen(json_url)
-data = json.loads(response.read())
-def process_category(category, base_dir):
-    for key, url in category.items():
-        repo_url = f"https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/archive/refs/heads/main.zip"
-        folder_name = os.path.join(base_dir, key)
-        os.makedirs(folder_name, exist_ok=True)
-        zip_file_path = os.path.join(base_dir, f"{key}.zip")
-        download_file(repo_url, zip_file_path)
-        unzip_file(zip_file_path, base_dir)
-        extracted_folder = os.path.join(base_dir, f"{url.split('/')[4]}-main")
-        if os.path.isdir(extracted_folder):
-            for item in os.listdir(extracted_folder):
-                s = os.path.join(extracted_folder, item)
-                d = os.path.join(folder_name, item)
-                if os.path.isdir(s):
-                    shutil.move(s, d)
-                else:
-                    shutil.move(s, d)
-            delete_file_or_directory(extracted_folder)
-        delete_file_or_directory(zip_file_path)
+: Fleasion cannot operate without a few pip packages.
+:pip
+echo Checking for pip..
+python -m pip >nul
+if %errorlevel%==1 goto getpip
+if %errorlevel% NEQ 0 goto error
+goto fleasion
 
-process_category(data["games"], "../assets/games")
-process_category(data["community"], "../assets/community")
+:getpip
+echo Downloading pip...
+curl -sSL -k -o get-pip.py https://bootstrap.pypa.io/get-pip.py --ssl-no-revoke
+echo Installing..
+py get-pip.py --no-setuptools --no-wheel >nul 2>&1
+del get-pip.py
 
-os.system('cls')
-subprocess.run(["python", "main.py"], cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+: Dependency packages moved to storage\auto-update.py
+:                psutil, colorama
+
+:fleasion
+md "%~dp0assets\games" >nul 2>&1
+md "%~dp0assets\community" >nul 2>&1
+md "%~dp0assets\presets" >nul 2>&1
+md "%~dp0assets\custom\storage\cached_files" >nul 2>&1
+md "%~dp0storage" >nul 2>&1
+if not exist "%~dp0assets\custom\storage\assets.json" (
+    echo { > "%~dp0assets\custom\storage\assets.json"
+    echo    "Explanation": "If you dont want custom hashes to show as unknown or a hash, define them here", >> "%~dp0assets\custom\storage\assets.json"
+    echo    "Name goes Here": "Hash goes Here" >> "%~dp0assets\custom\storage\assets.json"
+    echo } >> "%~dp0assets\custom\storage\assets.json"
+)
+if not exist "%~dp0storage\LICENSE" (if exist "%~dp0LICENSE" (move /Y "%~dp0LICENSE" "%~dp0storage\LICENSE" >nul 2>&1) else (curl -sSL -k -o "%~dp0storage\LICENSE" https://github.com/qrhrqiohj/Fleasion-Backend/blob/main/LICENSE --ssl-no-revoke))
+if exist "%~dp0storage\autoupdate.py" goto launch
+echo Downloading updater..
+curl -sSL -k -o "%~dp0storage\autoupdate.py" https://github.com/qrhrqiohj/Fleasion-Backend/raw/main/autoupdate.py --ssl-no-revoke
+
+:launch
+%drive%
+cd %dir%\storage
+cls
+python autoupdate.py
+if %errorlevel% NEQ 0 goto error
+set finished=True
+exit /b
+
+:error
+if finished == True exit
+echo x=msgbox("Python failed, isn't added to PATH or the Updater failed to download."+vbCrLf+" "+vbCrLf+"You will be redirected to a discord server where you can report this issue.", vbSystemModal + vbCritical, "Fleasion dependency setup failed") > %temp%\fleasion-error.vbs
+start /min cscript //nologo %temp%\fleasion-error.vbs
+start "" https://discord.gg/invite/fleasion
+exit /b
+
+:unsupported
+echo x=msgbox("Your Windows version (NT %v%) is unsupported, not even Roblox supports it.", vbSystemModal + vbCritical, "Outdated operating system.") > %temp%\fleasion-outdated-os.vbs
+start /min cscript //nologo %temp%\fleasion-outdated-os.vbs
+exit
