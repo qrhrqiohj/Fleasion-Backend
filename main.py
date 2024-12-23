@@ -521,43 +521,91 @@ def update_settings():
     load_settings() 
 
 def cache_down(file_id, game_pre):
-    base_url = f"https://pixeldrain.com/api/file/{file_id}"
-    output_filename = os.path.join(game_pre, "downloaded_file.zip")
+    DOWNLOAD_DIR = "./do_not_delete"
+    MERGED_DIR = os.path.join(game_pre, "./cached_files")
+    BASE_URL = f"https://api.github.com/repos/{file_id}/contents"
 
-    try:
-        # Get file size using a HEAD request to fetch metadata
-        with urllib.request.urlopen(base_url) as response:
-            file_size = int(response.headers.get('Content-Length', 0))  # Get the file size in bytes
-            file_size_mb = file_size / (1024 * 1024)  # Convert to MB
-            print(f"\nThe file size is: {file_size_mb:.2f} MB")
+    # Ensure the necessary directories exist
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    os.makedirs(MERGED_DIR, exist_ok=True)
 
-            # Ask user if they want to download the file
-            user_choice = input(f"Do you want to download the file of size {file_size_mb:.2f} MB? (yes/no): ").strip().lower()
-            if user_choice != "yes":
-                print("Download canceled.")
-                return
-
-            # Proceed with download if the user confirms
-            print(f"\nStarting download from: {base_url}")
-            urllib.request.urlretrieve(base_url, output_filename)
-            print(f"File downloaded successfully and saved as: {output_filename}")
-            
-            # Extract the file
-            with zipfile.ZipFile(output_filename, 'r') as zip_ref:
-                zip_ref.extractall(game_pre)
-                print(f"Extracted files from {output_filename}")
-            
-            # Clean up by deleting the downloaded zip file
-            os.remove(output_filename)
-            print(f"{output_filename} has been deleted after extraction.")
+    def get_files(url, download_dir):
+        """
+        Recursively fetch and download .zip files from the repository.
+        """
+        response = urllib.request.urlopen(url)
+        if response.status != 200:
+            print(f"Failed to fetch contents from {url}. HTTP Status Code: {response.status}")
+            return
         
-    except urllib.error.URLError as e:
-        print(f"An error occurred while downloading the file: {e}")
-        return
-    except zipfile.BadZipFile:
-        print(f"The downloaded file is not a valid ZIP file.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        files = json.loads(response.read())
+        for file in files:
+            if file["type"] == "file" and file["name"].endswith(".zip"):
+                download_file(file["download_url"], file["name"], download_dir)
+            elif file["type"] == "dir":
+                get_files(file["url"], download_dir)
+
+    def download_file(file_url, file_name, save_dir):
+        """
+        Downloads a file and saves it to the specified directory.
+        """
+        save_path = os.path.join(save_dir, file_name)
+        print(f"Downloading {file_name}...")
+        with urllib.request.urlopen(file_url) as response:
+            if response.status == 200:
+                with open(save_path, "wb") as f:
+                    f.write(response.read())
+                print(f"Saved {file_name} to {save_path}")
+            else:
+                print(f"Failed to download {file_name}. HTTP Status Code: {response.status}")
+
+    def unzip_and_merge(zip_dir, merge_dir):
+        """
+        Unzips all .zip files in the specified directory and merges their contents.
+        """
+        for file_name in os.listdir(zip_dir):
+            if file_name.endswith(".zip"):
+                zip_path = os.path.join(zip_dir, file_name)
+                temp_dir = os.path.join(zip_dir, "temp_unzip")
+                os.makedirs(temp_dir, exist_ok=True)
+
+                print(f"Unzipping {file_name}...")
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+
+                # Merge extracted contents into the merge_dir
+                for root, _, files in os.walk(temp_dir):
+                    for file in files:
+                        src_file = os.path.join(root, file)
+                        dest_file = os.path.join(merge_dir, os.path.relpath(src_file, temp_dir))
+                        os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+                        shutil.move(src_file, dest_file)
+
+                # Clean up temp directory
+                shutil.rmtree(temp_dir)
+                print(f"Merged contents of {file_name} into {merge_dir}")
+
+    def cleanup(directory):
+        """
+        Deletes the specified directory and its contents.
+        """
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+            print(f"Deleted directory: {directory}")
+
+    def main():
+        print("Starting download process...")
+        get_files(BASE_URL, DOWNLOAD_DIR)
+        print("Download process complete.")
+
+        print("Starting unzip and merge process...")
+        unzip_and_merge(DOWNLOAD_DIR, MERGED_DIR)
+        print(f"All contents have been merged into {MERGED_DIR}")
+
+        print("Cleaning up download directory...")
+        cleanup(DOWNLOAD_DIR)
+    
+    main()
 
 if __name__ == "__main__":
     load_settings()
