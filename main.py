@@ -41,7 +41,7 @@ def traverse_json(data, NoMulti, start_key=None):
             if not results:
                 raise ValueError(f"{Fore.RED}Invalid start key: {start_key}")
             path, value = results[0]
-            print(f"{Fore.GREEN}Starting at key: {path}")
+            print(f"\n{Fore.GREEN}Starting at key: {path}")
             current = value
             history.append((data, path))
         except (KeyError, TypeError, ValueError) as e:
