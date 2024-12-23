@@ -92,7 +92,7 @@ def traverse_json(data, NoMulti, start_key=None):
                             else:
                                 d += 1
                                 print(f"{d}. {Fore.GREEN}Path: {path}, Value: {value_str}")
-                        selection = input("Enter a number to navigate to the result or 'back' to return: ").strip()
+                        selection = input("Enter a number to navigate to the result or 'back' to return\n: ").strip()
                         a = d-i
                         if selection.isdigit():
                             idx = int(selection)-a
