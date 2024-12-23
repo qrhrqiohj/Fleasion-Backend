@@ -560,7 +560,7 @@ if __name__ == "__main__":
                             top = False
                         )
                         if custom_option == 'back':
-                            print(f"{Fore.CYAN}\nReturning to main menu.\n{Style.RESET_ALL}")
+                            print(f"{Fore.CYAN}\nReturning to main menu.{Style.RESET_ALL}")
                             break
 
                         match custom_option:
