@@ -304,7 +304,7 @@ def background_autolaunch():
                 if preset_choice:
                     print(f"\n\nApplied {preset}:")
                     for i in range(0, len(preset_choice), 2):
-                        replacer(preset_choice[i], preset_choice[i+1], temp=False, download=False)
+                        replacer(preset_choice[i], preset_choice[i+1], temp=False, download=False, game_pre=game_pre, display_names=display_names)
                 else:
                     print(f"{Fore.RED}Error running startup launch{Style.RESET_ALL}\n")
         except Exception as e:
@@ -564,13 +564,13 @@ if __name__ == "__main__":
                                 result = input("\nEnter asset to change, type comma-separated hashes to select multiple values.\n: ")
                                 result = result.split(', ') if ',' in result else [result]
                                 result2 = input("\nEnter replacement\n: ")
-                                replacer(result, result2, temp=False, download=False)
+                                replacer(result, result2, temp=False, download=False, game_pre=game_pre, display_names=display_names)
                                 break
                             case 2:
                                 result = input("\nEnter asset to change, type comma-separated hashes to select multiple values.\n: ")
                                 result = result.split(', ') if ',' in result else [result]
                                 result2 = input("\nEnter replacement\n: ")
-                                replacer(result, result2, temp=True, download=True)
+                                replacer(result, result2, temp=True, download=True, game_pre=game_pre, display_names=display_names)
                                 break
                 case 1:
                     result = games_game_pre(game_pre, selected_folder="", mode="games")
@@ -616,7 +616,7 @@ if __name__ == "__main__":
                                                 for i in range(0, len(preset_choice), 2):
                                                     result = preset_choice[i]
                                                     result2 = preset_choice[i+1]
-                                                    replacer(result, result2, temp=False, download=False)
+                                                    replacer(result, result2, temp=False, download=False, game_pre=game_pre, display_names=display_names)
                                             break
                                     break
                                 case 2:
