@@ -15,7 +15,6 @@ from colorama import Fore, Style, init
 
 init(autoreset=True)
 session_history = []
-temp_hack = "" # fix at later date, bandaid code.py push fix
 
 def traverse_json(data, NoMulti, start_key=None):
     def recursive_search(obj, search_key, path=""):
@@ -168,8 +167,7 @@ def collect_all_values(obj):
         values.append(obj)
     return values
 
-def replacer(result, result2, temp=None, download=None):
-    game_pre = temp_hack
+def replacer(result, result2, temp=None, download=None, game_pre=None, display_names=None):
     folder_path = os.path.join(os.getenv('TEMP'), 'roblox', 'http')
     session_history.extend([result, result2])
 
@@ -224,7 +222,7 @@ def replacer(result, result2, temp=None, download=None):
         else:
             print(f'{Fore.RED}An error occurred: {e}{Style.RESET_ALL}\n')
 
-def backbone(json_data, start_key, start_key2, addon, addon2, skip):
+def backbone(json_data, start_key, start_key2, addon, addon2, skip, game_pre, display_names):
     if not skip:
         result = collect_all_values(addon if addon else traverse_json(json_data, NoMulti=False, start_key=start_key))
         result = [result] if not isinstance(result, list) else result
@@ -234,12 +232,11 @@ def backbone(json_data, start_key, start_key2, addon, addon2, skip):
                 result2 = result2[0]
             
             if result2:
-                replacer(result, result2, temp=False, download=False)
+                replacer(result, result2, temp=False, download=False, game_pre=game_pre, display_names=display_names)
 
-            return json_data, start_key, start_key2, result, result2, skip
+            return json_data, start_key, start_key2, result, result2, skip, game_pre, display_names
 
-def game_runner(game_pre):
-    global temp_hack
+def game_runner(game_pre, display_names):
     json_file_path = f"{game_pre}assets.json"
     game_code = f"{game_pre}code.py"
 
@@ -260,9 +257,8 @@ def game_runner(game_pre):
         spec.loader.exec_module(game_module)
 
         if hasattr(game_module, "run"):
-            temp_hack = game_pre
-            json_data, start_key, start_key2, addon, addon2, skip = game_module.run(json_data, start_key, start_key2, addon, addon2, skip)
-            backbone(json_data, start_key, start_key2, addon, addon2, skip)
+            json_data, start_key, start_key2, addon, addon2, skip, game_pre, display_names = game_module.run(json_data, start_key, start_key2, addon, addon2, skip, game_pre, display_names)
+            backbone(json_data, start_key, start_key2, addon, addon2, skip, game_pre, display_names)
         else:
             print(f"\n{Fore.RED}Error: The file {game_code} does not contain a `run` function.{Style.RESET_ALL}")
     except FileNotFoundError:
@@ -582,14 +578,14 @@ if __name__ == "__main__":
                         continue
                     game_pre, selected_folder = result
                     print(f"\nViewing: {selected_folder}")
-                    game_runner(game_pre)
+                    game_runner(game_pre, display_names)
                 case 2:
                     result = games_game_pre(game_pre, selected_folder="", mode="community")
                     if result is None:
                         continue
                     game_pre, selected_folder = result
                     print(f"\nViewing: {selected_folder}")
-                    game_runner(game_pre)
+                    game_runner(game_pre, display_names)
                 case 3:
                     preset_dir = "assets/presets"
                     folders = [f for f in os.listdir(preset_dir) if f.endswith('.txt')]                    
