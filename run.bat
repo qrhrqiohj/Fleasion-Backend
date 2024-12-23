@@ -85,6 +85,7 @@ if not exist "%~dp0assets\custom\storage\assets.json" (
     echo    "Name goes Here": "Hash goes Here" >> "%~dp0assets\custom\storage\assets.json"
     echo } >> "%~dp0assets\custom\storage\assets.json"
 )
+if exist "%~dp0UNZIP BEFORE RUN" del "%~dp0UNZIP BEFORE RUN"
 if not exist "%~dp0storage\LICENSE" (if exist "%~dp0LICENSE" (move /Y "%~dp0LICENSE" "%~dp0storage\LICENSE" >nul 2>&1) else (curl -sSL -k -o "%~dp0storage\LICENSE" https://github.com/qrhrqiohj/Fleasion-Backend/blob/main/LICENSE --ssl-no-revoke))
 if exist "%~dp0storage\autoupdate.py" goto launch
 echo Downloading updater..
