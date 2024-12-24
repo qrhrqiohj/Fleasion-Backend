@@ -79,7 +79,7 @@ def main():
     if proceed != 0:
         global DOWNLOAD_DIR, MERGED_DIR
 
-        DOWNLOAD_DIR = "./do_not_delete"
+        DOWNLOAD_DIR = os.path.join(game_pre, "./do_not_delete")
         MERGED_DIR = os.path.join(game_pre, "./cached_files")
 
         os.makedirs(DOWNLOAD_DIR, exist_ok=True)
