@@ -499,7 +499,6 @@ def games_game_pre(game_pre, selected_folder, mode="games"):
                 if 0 <= choice < len(folders):
                     selected_folder = folders[choice]
                     game_pre = os.path.join(base_dir, selected_folder, "")
-                    print(game_pre)
                     with open(os.path.join(game_pre, "log.txt"), "r") as file:
                         lines = file.read().splitlines()
                         content = urllib.request.urlopen(lines[2]).read().decode('utf-8').splitlines()
