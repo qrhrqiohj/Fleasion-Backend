@@ -11,6 +11,7 @@ import importlib.util
 import threading
 import psutil
 import time
+import urllib.request
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -498,9 +499,18 @@ def games_game_pre(game_pre, selected_folder, mode="games"):
                 if 0 <= choice < len(folders):
                     selected_folder = folders[choice]
                     game_pre = os.path.join(base_dir, selected_folder, "")
-                    if not os.path.exists(os.path.join(game_pre, "cached_files")):
-                        with open(os.path.join(game_pre, "log.txt"), "r") as file:
-                            cache_down(file.read(), game_pre)
+                    print(game_pre)
+                    with open(os.path.join(game_pre, "log.txt"), "r") as file:
+                        lines = file.read().splitlines()
+                        content = urllib.request.urlopen(lines[2]).read().decode('utf-8').splitlines()
+                        if content[1] != lines[1]:
+                            print("\nUpdate needed!")
+                            cache_down(lines[0], game_pre)
+                            if not os.path.exists(os.path.join(game_pre, "cached_files")):
+                                break
+                            urllib.request.urlretrieve(lines[2], os.path.join(game_pre, 'log.txt'))                            
+                        if not os.path.exists(os.path.join(game_pre, "cached_files")):
+                            cache_down(lines[0], game_pre)
                             if not os.path.exists(os.path.join(game_pre, "cached_files")):
                                 break
                     return game_pre, selected_folder
