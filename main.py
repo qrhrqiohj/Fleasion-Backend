@@ -503,7 +503,7 @@ def games_game_pre(game_pre, selected_folder, mode="games"):
                         lines = file.read().splitlines()
                         content = urllib.request.urlopen(lines[2]).read().decode('utf-8').splitlines()
                         if content[1] != lines[1]:
-                            print(f"\n{Fore.BLUE}Update needed!{Style.RESET_ALL}")
+                            print(f"\n{Fore.CYAN}Update needed!{Style.RESET_ALL}")
                             cache_down(lines[0], game_pre)
                             if not os.path.exists(os.path.join(game_pre, "cached_files")):
                                 break
