@@ -56,8 +56,13 @@ response = urllib.request.urlopen(json_url)
 data = json.loads(response.read())
 def process_category(category, base_dir):
     for key, url in category.items():
+        log_exist = False
         repo_url = f"https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/archive/refs/heads/main.zip"
         folder_name = os.path.join(base_dir, key)
+        if os.path.exists(os.path.join(folder_name, "log.txt")):
+            with open(os.path.join(folder_name, "log.txt"), 'r') as log_file:
+                log = log_file.read()
+            log_exist = True
         os.makedirs(folder_name, exist_ok=True)
         zip_file_path = os.path.join(base_dir, f"{key}.zip")
         download_file(repo_url, zip_file_path)
@@ -73,6 +78,9 @@ def process_category(category, base_dir):
                     shutil.move(s, d)
             delete_file_or_directory(extracted_folder)
         delete_file_or_directory(zip_file_path)
+        if log_exist:
+            with open(f"{folder_name}/log.txt", 'w') as file:
+                file.write(log)
 
 process_category(data["games"], "../assets/games")
 process_category(data["community"], "../assets/community")
