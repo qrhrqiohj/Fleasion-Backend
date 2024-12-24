@@ -7,7 +7,6 @@ import shutil
 
 file_id = sys.argv[1]
 game_pre = sys.argv[2]
-file_id = file_id.strip()
 BASE_URL = f"https://api.github.com/repos/{file_id}/contents"
 
 def get_files(url, download_dir):
