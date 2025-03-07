@@ -70,7 +70,7 @@ def confirm_download():
         total_size_mb = total_size / (1024 * 1024)
     print(f"\nWARNING: The total download size is approximately {total_size_mb:.2f} MB.")
     confirm = input("Do you still want to continue? (yes/no)\n: ").strip().lower()
-    if confirm != 'yes':
+    if confirm.lower() not in ['yes', 'y']:
         print("\nDownload aborted.")
         return 0
 
