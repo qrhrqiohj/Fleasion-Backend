@@ -169,13 +169,12 @@ def collect_all_values(obj):
     return values
 
 def replacer(result, result2, temp=None, download=None, game_pre=None, display_names=None):
-    folder_path = os.path.join(os.getenv('TEMP'), 'roblox', 'http')
+    folder_path = os.path.join(os.getenv('LOCALAPPDATA'), 'Roblox', 'rbx-storage')
     session_history.extend([result, result2])
 
     def find_cached_file_path():
         if temp:
-            target_file_path = os.path.join(folder_path)
-            return target_file_path
+            return folder_path
         
         if game_pre:
             return f"{game_pre}cached_files"
@@ -200,7 +199,15 @@ def replacer(result, result2, temp=None, download=None, game_pre=None, display_n
         copy_file_path = os.path.join(local_cached_files_path, result2)
         if os.path.exists(copy_file_path):
             for file_to_replace in result:
-                target_file_path = os.path.join(folder_path, file_to_replace)
+                # Get the first two characters of the file to determine the subfolder
+                first_two_chars = file_to_replace[:2].lower()
+                target_subfolder = os.path.join(folder_path, first_two_chars)
+                target_file_path = os.path.join(target_subfolder, file_to_replace)
+                
+                # Create the subfolder if it doesn't exist
+                os.makedirs(target_subfolder, exist_ok=True)
+                
+                # Copy the file to the new location
                 shutil.copy(copy_file_path, target_file_path)
                 if not display_names:
                     print(f'\'{Fore.BLUE}{file_to_replace}{Style.RESET_ALL}\' has been replaced with \'{Fore.BLUE}{result2}{Style.RESET_ALL}\'')
