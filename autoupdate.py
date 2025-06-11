@@ -14,6 +14,10 @@ urllib.request.urlretrieve(
 )
 print(f"Downloaded rbx-storage.db to {appdata_roblox_dir}")
 
+temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
+os.makedirs(temp_roblox_http_dir, exist_ok=True)
+print(f"Ensured directory exists: {temp_roblox_http_dir}")
+
 with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
     requirements = response.read().decode('utf-8').splitlines()
 
