@@ -5,16 +5,25 @@ import zipfile
 import json
 import shutil
 
+appdata_roblox_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'Roblox')
+os.makedirs(appdata_roblox_dir, exist_ok=True)
+
+urllib.request.urlretrieve(
+    "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/rbx-storage.db",
+    os.path.join(appdata_roblox_dir, "rbx-storage.db")
+)
+print(f"Downloaded rbx-storage.db to {appdata_roblox_dir}")
+
 with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
     requirements = response.read().decode('utf-8').splitlines()
 
 for package in requirements:
     try:
-        subprocess.check_call([ "pip", "show", package ])
+        subprocess.check_call(["pip", "show", package])
         print(f"{package} is installed.")
     except subprocess.CalledProcessError:
         print(f"{package} is NOT installed. Installing...")
-        subprocess.check_call([ "pip", "install", package ])
+        subprocess.check_call(["pip", "install", package])
     os.system('cls')
 
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/run.bat", "../run.bat")
