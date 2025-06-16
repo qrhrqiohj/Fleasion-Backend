@@ -4,15 +4,29 @@ import os
 import zipfile
 import json
 import shutil
+import stat
+
+def is_read_only(file_path):
+    return os.path.exists(file_path) and not os.access(file_path, os.W_OK)
+
+def set_read_only(file_path):
+    os.chmod(file_path, stat.S_IREAD)
 
 appdata_roblox_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'Roblox')
 os.makedirs(appdata_roblox_dir, exist_ok=True)
 
-urllib.request.urlretrieve(
-    "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/rbx-storage.db",
-    os.path.join(appdata_roblox_dir, "rbx-storage.db")
-)
-print(f"Downloaded rbx-storage.db to {appdata_roblox_dir}")
+file_path = os.path.join(appdata_roblox_dir, "rbx-storage.db")
+
+if is_read_only(file_path):
+    print("rbx-storage.db already exists and is read-only. Skipping download.")
+else:
+    print("Downloading rbx-storage.db...")
+    urllib.request.urlretrieve(
+        "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/rbx-storage.db",
+        file_path
+    )
+    set_read_only(file_path)
+    print(f"Downloaded and set rbx-storage.db to read-only at {appdata_roblox_dir}")
 
 temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
 os.makedirs(temp_roblox_http_dir, exist_ok=True)
