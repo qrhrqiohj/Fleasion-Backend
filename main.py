@@ -12,7 +12,6 @@ import threading
 import psutil
 import time
 import urllib.request
-import stat
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -202,9 +201,7 @@ def replacer(result, result2, temp=None, download=None, game_pre=None, display_n
         if os.path.exists(copy_file_path):
             for file_to_replace in result:
                 target_file_path = os.path.join(folder_path, file_to_replace)
-                if os.path.exists(target_file_path):
-                    os.chmod(target_file_path, stat.S_IWUSR)
-                os.chmod(shutil.copy(copy_file_path, target_file_path), 0o444)
+                shutil.copy(copy_file_path, target_file_path)
                 if not display_names:
                     print(f'\'{Fore.BLUE}{file_to_replace}{Style.RESET_ALL}\' has been replaced with \'{Fore.BLUE}{result2}{Style.RESET_ALL}\'')
             if display_names:
@@ -837,7 +834,6 @@ if __name__ == "__main__":
                                 file_path = os.path.join(folder_path, filename)
                                 try:
                                     if os.path.isfile(file_path) or os.path.islink(file_path):
-                                        os.chmod(file_path, stat.S_IWUSR)
                                         os.unlink(file_path)
                                     elif os.path.isdir(file_path):
                                         shutil.rmtree(file_path)
@@ -864,7 +860,6 @@ if __name__ == "__main__":
                             
                             if os.path.exists(file_path):
                                 try:
-                                    os.chmod(file_path, stat.S_IWUSR)
                                     os.remove(file_path)
                                     print(f"{Fore.BLUE}Deleted: {file_name}{Style.RESET_ALL}")
                                 except Exception as e:
