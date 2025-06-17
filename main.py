@@ -201,7 +201,7 @@ def replacer(result, result2, temp=None, download=None, game_pre=None, display_n
         if os.path.exists(copy_file_path):
             for file_to_replace in result:
                 target_file_path = os.path.join(folder_path, file_to_replace)
-                shutil.copy(copy_file_path, target_file_path)
+                os.chmod(shutil.copy(copy_file_path, target_file_path), 0o444)
                 if not display_names:
                     print(f'\'{Fore.BLUE}{file_to_replace}{Style.RESET_ALL}\' has been replaced with \'{Fore.BLUE}{result2}{Style.RESET_ALL}\'')
             if display_names:
