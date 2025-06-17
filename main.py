@@ -864,6 +864,7 @@ if __name__ == "__main__":
                             
                             if os.path.exists(file_path):
                                 try:
+                                    os.chmod(file_path, stat.S_IWUSR)
                                     os.remove(file_path)
                                     print(f"{Fore.BLUE}Deleted: {file_name}{Style.RESET_ALL}")
                                 except Exception as e:
