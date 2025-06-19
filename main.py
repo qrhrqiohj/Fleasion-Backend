@@ -116,7 +116,7 @@ def traverse_json(data, NoMulti, start_key=None):
 
             if not NoMulti and ',' in user_input:
                 try:
-                    indices = [int(x) for x in user_input.split(',')]
+                    indices = [int(x) - 1 for x in user_input.split(',')]
                     selected_keys = [keys[i] for i in indices if 0 <= i < len(keys)]
                     valid_keys = []
 
