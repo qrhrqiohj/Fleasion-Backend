@@ -534,7 +534,7 @@ def cache_down(file_id, game_pre):
 if __name__ == "__main__":
     load_settings()
     background_autolaunch()
-    print("For news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF")
+    print('For news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF\nChanges not appearing ingame? Applying this flag should fix "FFlagHttpUseRbxStorage10": "False"')
 
     while True:
         game_pre = ""
