@@ -534,7 +534,7 @@ def cache_down(file_id, game_pre):
 if __name__ == "__main__":
     load_settings()
     background_autolaunch()
-    print('Changes not appearing ingame? Try use this flag "FFlagHttpUseRbxStorage10": "False"\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
+    print(f'{Fore.GREEN}DO NOT APPLY CHANGES WITH ROBLOX OPEN{Stylis.RESET_ALL}\NChanges not appearing ingame? Try use this flag "FFlagHttpUseRbxStorage10": "False"\n\NFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
 
     while True:
         game_pre = ""
