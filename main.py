@@ -268,7 +268,7 @@ def game_runner(game_pre, display_names):
         print(f"\n{Fore.RED}Error executing run(): {e}{Style.RESET_ALL}")
 
 def load_settings():
-    global startup_launch, startup_preset, display_names
+    global startup_launch, startup_preset, display_names, bootstrapper
 
     try:
         with open("storage/settings.json", 'r') as f:
@@ -278,14 +278,15 @@ def load_settings():
     except json.JSONDecodeError:
         raise ValueError(f"{Fore.RED}The settings file contains invalid JSON. Please check the file contents.{Style.RESET_ALL}") from None
 
-    required_keys = ['startup_launch', 'display_names', 'startup_preset']
+    required_keys = ['startup_launch', 'display_names', 'startup_preset', 'bootstrapper']
     for key in required_keys:
         if key not in data:
-            raise KeyError(f"{Fore.RED}Missing required setting: '{key}' in the settings file.{Style.RESET_ALL}") from None
+            raise KeyError(f"{Fore.RED}Missing required setting: '{key}' in the settings file.{Style.RESET_RED}") from None
 
     startup_launch = data.get('startup_launch')
     display_names = data.get('display_names')
     startup_preset = data.get('startup_preset')
+    bootstrapper = data.get('bootstrapper')
 
     return data
 
@@ -908,13 +909,14 @@ if __name__ == "__main__":
                     settings = load_settings()
                     while True:
                         settings_option = get_valid_input(
-                                        f"\nSelect setting option:\n"
-                                        f"1: {Fore.GREEN}Apply preset on launch{Style.RESET_ALL}: {Fore.GREEN if startup_launch else Fore.RED}{', '.join(startup_preset) if startup_preset else 'N/A'}{Style.RESET_ALL}\n"
-                                        f"2: {Fore.GREEN}Display changes as names: {Fore.GREEN if display_names else Fore.RED}{display_names}{Style.RESET_ALL}\n" 
-                                        f"3: {Fore.GREEN}Clear session history{Style.RESET_ALL}\n"
-                                        f"Type 'back' to return to the main menu.\n: ",
-                                        valid_values=[1,2, 3],
-                                        top = False
+                                            f"\nSelect setting option:\n"
+                                            f"1: {Fore.GREEN}Apply preset on launch{Style.RESET_ALL}: {Fore.GREEN if startup_launch else Fore.RED}{', '.join(startup_preset) if startup_preset else 'N/A'}{Style.RESET_ALL}\n"
+                                            f"2: {Fore.GREEN}Display changes as names: {Fore.GREEN if display_names else Fore.RED}{display_names}{Style.RESET_ALL}\n" 
+                                            f"3: {Fore.GREEN}Default Bootstrapper: {Fore.GREEN}{bootstrapper}{Style.RESET_ALL}\n"
+                                            f"4: {Fore.GREEN}Clear session history{Style.RESET_ALL}\n"
+                                            f"Type 'back' to return to the main menu.\n: ",
+                                            valid_values=[1,2,3,4],
+                                            top = False
                         )
                         if settings_option == 'back':
                             print(f"{Fore.CYAN}\nReturning to main menu.{Style.RESET_ALL}")
@@ -939,7 +941,9 @@ if __name__ == "__main__":
                                         try:
                                             match launch_option:
                                                 case 1:
-                                                    while True:                                                       
+                                                    preset_dir = "assets/presets"                                            
+                                                    folders = [f for f in os.listdir(preset_dir) if f.endswith('.txt')]
+                                                    while True:                                                                    
                                                         apply_on_launch_option = get_valid_input(
                                                                                 f"\nSelect launch option:\n"
                                                                                 f"1: {Fore.GREEN}Add preset{Style.RESET_ALL}\n"
@@ -954,8 +958,6 @@ if __name__ == "__main__":
 
                                                         match apply_on_launch_option:
                                                             case 1:
-                                                                preset_dir = "assets/presets"                                            
-                                                                folders = [f for f in os.listdir(preset_dir) if f.endswith('.txt')]
                                                                 user_input = find_preset("")
                                                                 if isinstance(user_input, (int)):
                                                                     break                                                                        
@@ -984,6 +986,8 @@ if __name__ == "__main__":
                                                                 else:
                                                                     print(f"\n{Fore.RED}No Presets to remove!{Style.RESET_ALL}")
                                                                     break
+                                                    if apply_on_launch_option != 'back': # Added this check
+                                                        break
                                                 case 2:
                                                     settings['startup_launch'] = not settings['startup_launch']
                                                     update_settings()
@@ -992,7 +996,40 @@ if __name__ == "__main__":
                                 case 2:
                                     settings['display_names'] = not settings['display_names']
                                     update_settings()
-                                case 3:
+                                case 3: # New case for default bootstrapper
+                                    while True:
+                                        bootstrapper_option = get_valid_input(
+                                                        f"\nSelect default bootstrapper:\n"
+                                                        f"1: {Fore.GREEN}Bloxstrap{Style.RESET_ALL}\n"
+                                                        f"2: {Fore.GREEN}Fishstrap{Style.RESET_ALL}\n"
+                                                        f"3: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
+                                                        f"Type 'back' to return to Fleasion settings.\n: ",
+                                                        valid_values=[1,2,3],
+                                                        top = False
+                                        )
+                                        if bootstrapper_option == 'back':
+                                            print(f"{Fore.CYAN}\nReturning to Fleasion settings.{Style.RESET_ALL}")
+                                            break
+
+                                        match bootstrapper_option:
+                                            case 1:
+                                                settings['bootstrapper'] = "Bloxstrap"
+                                                update_settings()
+                                                break
+                                            case 2:
+                                                settings['bootstrapper'] = "Fishstrap"
+                                                update_settings()
+                                                break
+                                            case 3:
+                                                custom_bootstrapper = input("Enter custom bootstrapper name: ").strip()
+                                                if custom_bootstrapper:
+                                                    settings['bootstrapper'] = custom_bootstrapper
+                                                    update_settings()
+                                                else:
+                                                    print(f"{Fore.RED}Bootstrapper name cannot be empty.{Style.RESET_ALL}")
+                                                break
+                                    break # Break from the inner while True for bootstrapper selection
+                                case 4: # Shifted clear session history to case 4
                                     if not session_history:
                                         print(f"\n{Fore.GREEN}History is already empty!{Style.RESET_ALL}")
                                     else:
