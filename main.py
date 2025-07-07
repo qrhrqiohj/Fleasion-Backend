@@ -986,7 +986,7 @@ if __name__ == "__main__":
                                                                 else:
                                                                     print(f"\n{Fore.RED}No Presets to remove!{Style.RESET_ALL}")
                                                                     break
-                                                    if apply_on_launch_option != 'back': # Added this check
+                                                    if apply_on_launch_option != 'back':
                                                         break
                                                 case 2:
                                                     settings['startup_launch'] = not settings['startup_launch']
@@ -996,15 +996,16 @@ if __name__ == "__main__":
                                 case 2:
                                     settings['display_names'] = not settings['display_names']
                                     update_settings()
-                                case 3: # New case for default bootstrapper
+                                case 3:
                                     while True:
                                         bootstrapper_option = get_valid_input(
                                                         f"\nSelect default bootstrapper:\n"
                                                         f"1: {Fore.GREEN}Bloxstrap{Style.RESET_ALL}\n"
                                                         f"2: {Fore.GREEN}Fishstrap{Style.RESET_ALL}\n"
-                                                        f"3: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
+                                                        f"3: {Fore.GREEN}Voidstrap{Style.RESET_ALL}\n"
+                                                        f"4: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
                                                         f"Type 'back' to return to Fleasion settings.\n: ",
-                                                        valid_values=[1,2,3],
+                                                        valid_values=[1,2,3,4],
                                                         top = False
                                         )
                                         if bootstrapper_option == 'back':
@@ -1021,6 +1022,10 @@ if __name__ == "__main__":
                                                 update_settings()
                                                 break
                                             case 3:
+                                                settings['bootstrapper'] = "Voidstrap"
+                                                update_settings()
+                                                break
+                                            case 4:
                                                 custom_bootstrapper = input("Enter custom bootstrapper name: ").strip()
                                                 if custom_bootstrapper:
                                                     settings['bootstrapper'] = custom_bootstrapper
@@ -1028,8 +1033,8 @@ if __name__ == "__main__":
                                                 else:
                                                     print(f"{Fore.RED}Bootstrapper name cannot be empty.{Style.RESET_ALL}")
                                                 break
-                                    break # Break from the inner while True for bootstrapper selection
-                                case 4: # Shifted clear session history to case 4
+                                    break
+                                case 4:
                                     if not session_history:
                                         print(f"\n{Fore.GREEN}History is already empty!{Style.RESET_ALL}")
                                     else:
