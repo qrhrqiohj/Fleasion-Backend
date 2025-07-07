@@ -1,149 +1,132 @@
-import urllib.request
-import subprocess
+import json
+import sys
 import os
 import zipfile
-import json
+import urllib.request
 import shutil
-import stat
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def kill_roblox_processes():
-    print("Killing all Roblox processes...")
-    roblox_processes = [
-        "RobloxPlayerBeta.exe",
-        "RobloxStudioBeta.exe",
-        "RobloxPlayerLauncher.exe"
-    ]
-    for proc in roblox_processes:
-        subprocess.call(['taskkill', '/f', '/im', proc], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+file_id = sys.argv[1]
+game_pre = sys.argv[2]
+BASE_URL = f"https://api.github.com/repos/{file_id}/contents"
 
-def is_read_only(file_path): 
-    return os.path.exists(file_path) and not os.access(file_path, os.W_OK)
-
-def set_read_only(file_path):
-    os.chmod(file_path, stat.S_IREAD)
-
-appdata_roblox_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'Roblox')
-os.makedirs(appdata_roblox_dir, exist_ok=True)
-file_path = os.path.join(appdata_roblox_dir, "rbx-storage.db")
-
-if is_read_only(file_path):
-    print("rbx-storage.db already exists and is read-only. Skipping download.")
-else:
-    print("Downloading rbx-storage.db...")
-    try:
-        kill_roblox_processes()
-        urllib.request.urlretrieve(
-            "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/rbx-storage.db",
-            file_path
-        )
-        set_read_only(file_path)
-        print(f"Downloaded and set rbx-storage.db to read-only at {appdata_roblox_dir}")
-    except Exception as e:
-        print(f"Failed to download or replace rbx-storage.db: {e}")
-
-temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
-os.makedirs(temp_roblox_http_dir, exist_ok=True)
-print(f"Ensured directory exists: {temp_roblox_http_dir}")
-
-with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
-    requirements = response.read().decode('utf-8').splitlines()
-
-for package in requirements:
-    try:
-        subprocess.check_call(["pip", "show", package])
-        print(f"{package} is installed.")
-    except subprocess.CalledProcessError:
-        print(f"{package} is NOT installed. Installing...")
-        subprocess.check_call(["pip", "install", package])
-    os.system('cls')
-
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/run.bat", "../run.bat")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "../main.py")
-if not os.path.exists("../storage/settings.json"):
-    urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "../storage/settings.json")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/cached_files_downloader.py", "../storage/cached_files_downloader.py")
-urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/autoupdate.py", "../storage/autoupdate.py")
-
-json_url = "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/CLOG"
-
-def download_file(url, filename):
-    try:
-        urllib.request.urlretrieve(url, filename)
-        print(f"Downloaded: {filename}")
-    except Exception as e:
-        print(f"Error downloading {filename}: {e}")
-
-def unzip_file(zip_file, extract_to):
-    try:
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
-        print(f"Unzipped to: {extract_to}")
-    except Exception as e:
-        print(f"Error unzipping {zip_file}: {e}")
-
-def delete_file_or_directory(path):
-    try:
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-            print(f"Deleted directory: {path}")
-        else:
-            os.remove(path)
-            print(f"Deleted file: {path}")
-    except Exception as e:
-        print(f"Error deleting {path}: {e}")
-
-def process_item(key, url, base_dir):
-    log_exist = False
-    repo_url = f"https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/archive/refs/heads/main.zip"
-    folder_name = os.path.join(base_dir, key)
-    log_path = os.path.join(folder_name, "log.txt")
+def get_files(url, download_dir):
+    response = urllib.request.urlopen(url)
+    if response.status != 200:
+        print(f"Failed to fetch contents from {url}. HTTP Status Code: {response.status}")
+        return []
     
-    if os.path.exists(log_path):
-        with open(log_path, 'r') as log_file:
-            log = log_file.read()
-        log_exist = True
-    
-    os.makedirs(folder_name, exist_ok=True)
-    zip_file_path = os.path.join(base_dir, f"{key}.zip")
-    
-    download_file(repo_url, zip_file_path)
-    unzip_file(zip_file_path, base_dir)
-    
-    extracted_folder = os.path.join(base_dir, f"{url.split('/')[4]}-main")
-    if os.path.isdir(extracted_folder):
-        for item in os.listdir(extracted_folder):
-            s = os.path.join(extracted_folder, item)
-            d = os.path.join(folder_name, item)
-            if os.path.isdir(s):
-                shutil.move(s, d)
+    files = json.loads(response.read())
+    file_tasks = []
+    for file in files:
+        if file["type"] == "file" and file["name"].endswith(".zip"):
+            file_tasks.append((file["download_url"], file["name"], download_dir))
+        elif file["type"] == "dir":
+            file_tasks.extend(get_files(file["url"], download_dir))
+    return file_tasks
+
+def download_file(file_url, file_name, save_dir):
+    save_path = os.path.join(save_dir, file_name)
+    print(f"Downloading {file_name}...")
+    try:
+        with urllib.request.urlopen(file_url) as response:
+            if response.status == 200:
+                with open(save_path, "wb") as f:
+                    f.write(response.read())
+                print(f"Saved {file_name} to {save_path}")
             else:
-                shutil.move(s, d)
-        delete_file_or_directory(extracted_folder)
-    
-    delete_file_or_directory(zip_file_path)
-    
-    if log_exist:
-        with open(log_path, 'w') as file:
-            file.write(log)
+                print(f"Failed to download {file_name}. HTTP Status Code: {response.status}")
+    except Exception as e:
+        print(f"Error downloading {file_name}: {e}")
 
-def process_category(category, base_dir):
+def unzip_and_merge_file(zip_file_name, zip_dir, merge_dir):
+    zip_path = os.path.join(zip_dir, zip_file_name)
+    temp_dir = os.path.join(zip_dir, f"temp_unzip_{zip_file_name}")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    print(f"Unzipping {zip_file_name}...")
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                src_file = os.path.join(root, file)
+                dest_file = os.path.join(merge_dir, os.path.relpath(src_file, temp_dir))
+                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+                shutil.move(src_file, dest_file)
+
+        shutil.rmtree(temp_dir)
+        print(f"Merged contents of {zip_file_name} into {merge_dir}")
+    except Exception as e:
+        print(f"Error processing {zip_file_name}: {e}")
+
+def cleanup(directory):
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+        print(f"Deleted directory: {directory}")
+
+def confirm_download():
+    with urllib.request.urlopen(BASE_URL) as response:
+        contents = json.load(response)
+        total_size = 0
+        for item in contents:
+            if item['type'] == 'file':
+                total_size += item['size']
+
+        total_size_mb = total_size / (1024 * 1024)
+    print(f"\nWARNING: The total download size is approximately {total_size_mb:.2f} MB.")
+    confirm = input("Do you still want to continue? (yes/no)\n: ").strip().lower()
+    if confirm not in ['yes', 'y']:
+        print("\nDownload aborted.")
+        return False
+    return True
+
+def main():
+    if not confirm_download():
+        return
+
+    global DOWNLOAD_DIR, MERGED_DIR
+    DOWNLOAD_DIR = os.path.join(game_pre, "./do_not_delete")
+    MERGED_DIR = os.path.join(game_pre, "./cached_files")
+
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    os.makedirs(MERGED_DIR, exist_ok=True)
+    print("\nStarting download process...")
+
+    # Collect all file tasks
+    file_tasks = get_files(BASE_URL, DOWNLOAD_DIR)
+
+    # Download files concurrently
     with ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(process_item, key, url, base_dir)
-            for key, url in category.items()
+            executor.submit(download_file, file_url, file_name, save_dir)
+            for file_url, file_name, save_dir in file_tasks
         ]
         for future in as_completed(futures):
             try:
                 future.result()
             except Exception as e:
-                print(f"Error processing item: {e}")
+                print(f"Error in download task: {e}")
 
-response = urllib.request.urlopen(json_url)
-data = json.loads(response.read())
+    print("Download process complete.")
 
-process_category(data["games"], "../assets/games")
-process_category(data["community"], "../assets/community")
+    print("Starting unzip and merge process...")
+    # Unzip and merge files concurrently
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(unzip_and_merge_file, file_name, DOWNLOAD_DIR, MERGED_DIR)
+            for _, file_name, _ in file_tasks
+        ]
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error in unzip/merge task: {e}")
 
-os.system('cls')
-subprocess.run(["python", "main.py"], cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    print(f"All contents have been merged into {MERGED_DIR}")
+
+    print("Cleaning up download directory...")
+    cleanup(DOWNLOAD_DIR)
+
+main()
