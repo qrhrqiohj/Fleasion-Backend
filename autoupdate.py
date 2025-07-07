@@ -60,10 +60,55 @@ for package in requirements:
 
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/run.bat", "../run.bat")
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/main.py", "../main.py")
-if not os.path.exists("../storage/settings.json"):
-    urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json", "../storage/settings.json")
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/cached_files_downloader.py", "../storage/cached_files_downloader.py")
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/autoupdate.py", "../storage/autoupdate.py")
+
+settings_url = "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/settings.json"
+local_settings_path = "../storage/settings.json"
+
+try:
+    with urllib.request.urlopen(settings_url) as response:
+        remote_settings_content = json.loads(response.read().decode('utf-8'))
+    print("Successfully fetched remote settings.json.")
+
+    if os.path.exists(local_settings_path):
+        print("Local settings.json found. Checking for new entries...")
+        try:
+            with open(local_settings_path, 'r') as f:
+                local_settings_content = json.load(f)
+            
+            updated_settings = local_settings_content.copy()
+            for key, value in remote_settings_content.items():
+                if key not in updated_settings:
+                    updated_settings[key] = value
+                    print(f"Added new entry to settings.json: {key}")
+            
+            with open(local_settings_path, 'w') as f:
+                json.dump(updated_settings, f, indent=4)
+            print("Local settings.json updated with new entries.")
+
+        except json.JSONDecodeError:
+            print(f"Error reading local settings.json as JSON. Overwriting with remote version.")
+            urllib.request.urlretrieve(settings_url, local_settings_path)
+            print("settings.json downloaded and replaced.")
+        except Exception as e:
+            print(f"An error occurred during local settings.json processing: {e}")
+            urllib.request.urlretrieve(settings_url, local_settings_path)
+            print("settings.json downloaded and replaced.")
+    else:
+        print("Local settings.json not found. Downloading...")
+        urllib.request.urlretrieve(settings_url, local_settings_path)
+        print("settings.json downloaded.")
+
+except Exception as e:
+    print(f"Failed to fetch remote settings.json or process it: {e}")
+    if not os.path.exists(local_settings_path):
+        print("Local settings.json does not exist and remote fetch failed. Attempting to download directly as fallback.")
+        try:
+            urllib.request.urlretrieve(settings_url, local_settings_path)
+            print("settings.json downloaded (fallback).")
+        except Exception as e_fallback:
+            print(f"Fallback download of settings.json also failed: {e_fallback}")
 
 json_url = "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/CLOG"
 
