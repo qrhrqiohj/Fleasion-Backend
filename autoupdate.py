@@ -5,6 +5,7 @@ import zipfile
 import json
 import shutil
 import stat
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def kill_roblox_processes():
     print("Killing all Roblox processes...")
@@ -92,35 +93,54 @@ def delete_file_or_directory(path):
     except Exception as e:
         print(f"Error deleting {path}: {e}")
 
+def process_item(key, url, base_dir):
+    log_exist = False
+    repo_url = f"https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/archive/refs/heads/main.zip"
+    folder_name = os.path.join(base_dir, key)
+    log_path = os.path.join(folder_name, "log.txt")
+    
+    if os.path.exists(log_path):
+        with open(log_path, 'r') as log_file:
+            log = log_file.read()
+        log_exist = True
+    
+    os.makedirs(folder_name, exist_ok=True)
+    zip_file_path = os.path.join(base_dir, f"{key}.zip")
+    
+    download_file(repo_url, zip_file_path)
+    unzip_file(zip_file_path, base_dir)
+    
+    extracted_folder = os.path.join(base_dir, f"{url.split('/')[4]}-main")
+    if os.path.isdir(extracted_folder):
+        for item in os.listdir(extracted_folder):
+            s = os.path.join(extracted_folder, item)
+            d = os.path.join(folder_name, item)
+            if os.path.isdir(s):
+                shutil.move(s, d)
+            else:
+                shutil.move(s, d)
+        delete_file_or_directory(extracted_folder)
+    
+    delete_file_or_directory(zip_file_path)
+    
+    if log_exist:
+        with open(log_path, 'w') as file:
+            file.write(log)
+
+def process_category(category, base_dir):
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(process_item, key, url, base_dir)
+            for key, url in category.items()
+        ]
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error processing item: {e}")
+
 response = urllib.request.urlopen(json_url)
 data = json.loads(response.read())
-def process_category(category, base_dir):
-    for key, url in category.items():
-        log_exist = False
-        repo_url = f"https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/archive/refs/heads/main.zip"
-        folder_name = os.path.join(base_dir, key)
-        if os.path.exists(os.path.join(folder_name, "log.txt")):
-            with open(os.path.join(folder_name, "log.txt"), 'r') as log_file:
-                log = log_file.read()
-            log_exist = True
-        os.makedirs(folder_name, exist_ok=True)
-        zip_file_path = os.path.join(base_dir, f"{key}.zip")
-        download_file(repo_url, zip_file_path)
-        unzip_file(zip_file_path, base_dir)
-        extracted_folder = os.path.join(base_dir, f"{url.split('/')[4]}-main")
-        if os.path.isdir(extracted_folder):
-            for item in os.listdir(extracted_folder):
-                s = os.path.join(extracted_folder, item)
-                d = os.path.join(folder_name, item)
-                if os.path.isdir(s):
-                    shutil.move(s, d)
-                else:
-                    shutil.move(s, d)
-            delete_file_or_directory(extracted_folder)
-        delete_file_or_directory(zip_file_path)
-        if log_exist:
-            with open(f"{folder_name}/log.txt", 'w') as file:
-                file.write(log)
 
 process_category(data["games"], "../assets/games")
 process_category(data["community"], "../assets/community")
