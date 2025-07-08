@@ -281,7 +281,7 @@ def load_settings():
     required_keys = ['startup_launch', 'display_names', 'startup_preset', 'bootstrapper']
     for key in required_keys:
         if key not in data:
-            raise KeyError(f"{Fore.RED}Missing required setting: '{key}' in the settings file.{Style.RESET_RED}") from None
+            raise KeyError(f"{Fore.RED}Missing required setting: '{key}' in the settings file.{Style.RESET_ALL}") from None
 
     startup_launch = data.get('startup_launch')
     display_names = data.get('display_names')
