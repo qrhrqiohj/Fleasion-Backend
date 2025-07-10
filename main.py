@@ -12,6 +12,7 @@ import threading
 import psutil
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -825,25 +826,57 @@ if __name__ == "__main__":
                     block_main()
                 case 6:
                     folder_path = os.path.join(os.getenv('TEMP'), 'roblox', 'http')
+
+                    def delete_file_or_directory(path):
+                        """Helper function to delete a file or directory safely."""
+                        try:
+                            if os.path.isfile(path) or os.path.islink(path):
+                                os.unlink(path)
+                            elif os.path.isdir(path):
+                                shutil.rmtree(path)
+                            return True, path, None
+                        except Exception as e:
+                            return False, path, e
+
                     def clear_full_cache():
-                        if os.path.exists(folder_path):
-                            if not os.listdir(folder_path):
-                                print(f"\n{Fore.YELLOW}The directory {folder_path} is already empty.{Style.RESET_ALL}")
-                                return
-                            for filename in os.listdir(folder_path):
-                                file_path = os.path.join(folder_path, filename)
-                                try:
-                                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                                        os.unlink(file_path)
-                                    elif os.path.isdir(file_path):
-                                        shutil.rmtree(file_path)
-                                except Exception as e:
-                                    print(f"Failed to delete {file_path}. Reason: {e}")
+                        if not os.path.exists(folder_path):
+                            print(f"{Fore.RED}The directory {folder_path} does not exist.{Style.RESET_ALL}")
+                            return
+
+                        files_and_dirs = os.listdir(folder_path)
+                        if not files_and_dirs:
+                            print(f"\n{Fore.YELLOW}The directory {folder_path} is already empty.{Style.RESET_ALL}")
+                            return
+
+                        with ThreadPoolExecutor() as executor:
+                            futures = [executor.submit(delete_file_or_directory, os.path.join(folder_path, item)) for item in files_and_dirs]
+                            
+                            all_successful = True
+                            for future in futures:
+                                success, path, error = future.result()
+                                if not success:
+                                    print(f"{Fore.RED}Failed to delete {path}. Reason: {error}{Style.RESET_ALL}")
+                                    all_successful = False
+                        
+                        if all_successful:
                             print(f"\n{Fore.GREEN}Cleared cache!{Style.RESET_ALL}")
                         else:
-                            print(f"{Fore.RED}The directory {folder_path} does not exist.{Style.RESET_ALL}")
+                            print(f"\n{Fore.YELLOW}Cache clear completed with some errors.{Style.RESET_ALL}")
 
-                    def delete_filtered_files():
+                    def delete_single_file(file_path, file_name):
+                        if os.path.exists(file_path):
+                            try:
+                                os.remove(file_path)
+                                print(f"{Fore.BLUE}Deleted: {file_name}{Style.RESET_ALL}")
+                                return True, file_name, None
+                            except Exception as e:
+                                print(f"{Fore.RED}Error deleting {file_name}{Style.RESET_ALL}: {e}")
+                                return False, file_name, e
+                        else:
+                            print(f"{Fore.RED}File not found: {file_name}{Style.RESET_ALL}")
+                            return False, file_name, "File not found"
+
+                    def delete_filtered_files(filtered_history):
                         def flatten(lst):
                             result = []
                             for item in lst:
@@ -852,22 +885,32 @@ if __name__ == "__main__":
                                 else:
                                     result.append(item)
                             return result
-                        
+
                         flattened_history = flatten(filtered_history)
 
-                        for file_name in flattened_history:
-                            file_path = os.path.join(folder_path, file_name)
+                        if not flattened_history:
+                            print(f"{Fore.YELLOW}No files to delete based on the filtered history.{Style.RESET_ALL}")
+                            return
+
+                        with ThreadPoolExecutor() as executor:
+                            futures = []
+                            for file_name in flattened_history:
+                                file_path = os.path.join(folder_path, file_name)
+                                futures.append(executor.submit(delete_single_file, file_path, file_name))
                             
-                            if os.path.exists(file_path):
-                                try:
-                                    os.remove(file_path)
-                                    print(f"{Fore.BLUE}Deleted: {file_name}{Style.RESET_ALL}")
-                                except Exception as e:
-                                    print(f"{Fore.RED}Error deleting {file_name}{Style.RESET_ALL}: {e}")
-                            else:
-                                print(f"{Fore.RED}File not found: {file_name}{Style.RESET_ALL}")
+                            all_successful = True
+                            for future in futures:
+                                success, file_name, error = future.result()
+                                if not success and error != "File not found":
+                                    all_successful = False
                         
-                        global session_history; session_history = []
+                        if all_successful:
+                            print(f"\n{Fore.GREEN}Filtered files deletion completed!{Style.RESET_ALL}")
+                        else:
+                            print(f"\n{Fore.YELLOW}Filtered files deletion completed with some errors.{Style.RESET_ALL}")
+                        
+                        global session_history
+                        session_history = []
 
                     while True:
                         cache_option = get_valid_input(
