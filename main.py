@@ -1120,7 +1120,7 @@ if __name__ == "__main__":
 {Fore.YELLOW}Contributed to by:{Style.RESET_ALL} 
     - etcy {Fore.BLUE}@3tcy{Style.RESET_ALL} (run.bat)
     - yolo {Fore.BLUE}@yoloblokers{Style.RESET_ALL} (maintaining)
-    - .o0x {Fore.BLUE}@.o0x{Style.RESET_ALL} (maintaining)
+    - o0x {Fore.BLUE}@.o0x{Style.RESET_ALL} (maintaining)
 {Fore.YELLOW}Thanks to the community for supporting this project!{Style.RESET_ALL}
     - All of your supported and continued enthusiasm despite issues I may impose - Tyler
 {Fore.YELLOW}Special thanks to server boosters:{Style.RESET_ALL}
