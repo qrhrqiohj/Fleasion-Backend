@@ -536,7 +536,7 @@ def cache_down(file_id, game_pre):
 if __name__ == "__main__":
     load_settings()
     background_autolaunch()
-    print(f'>> {Fore.MAGENTA}MOST CHANGES MADE WITH ROBLOX OPEN WILL NOT APPLY UNTIL REJOIN{Style.RESET_ALL} <<\nChanges not appearing ingame? Try use this flag "FFlagHttpUseRbxStorage10": "False"\n\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
+    print(f'>> {Fore.MAGENTA}MOST CHANGES MADE WITH ROBLOX OPEN WILL NOT APPLY UNTIL REJOIN{Style.RESET_ALL} <<\nIF FLEASION DOESNT WORK FOR YOU THEN WAIT FOR AN UPDATE ROBLOX PATCHED FFLAGS\n\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
     while True:
         game_pre = ""
         run_option = get_valid_input(f"\nWelcome to: Fleasion!\n"
@@ -1130,3 +1130,4 @@ Enter to return: """
                     )
         except Exception as e:
             print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
+
