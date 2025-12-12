@@ -4,8 +4,13 @@ import os
 import zipfile
 import json
 import shutil
-import stat
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import getpass as gp
+from pathlib import Path
+
+temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
+os.makedirs(temp_roblox_http_dir, exist_ok=True)
+print(f"Ensured directory exists: {temp_roblox_http_dir}")
 
 def kill_roblox_processes():
     print("Killing all Roblox processes...")
@@ -17,34 +22,33 @@ def kill_roblox_processes():
     for proc in roblox_processes:
         subprocess.call(['taskkill', '/f', '/im', proc], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def is_read_only(file_path): 
-    return os.path.exists(file_path) and not os.access(file_path, os.W_OK)
+LOCAL_ROBLOX_FOLDER = Path('~/AppData/Local/Roblox').expanduser()
+DB_PATH = LOCAL_ROBLOX_FOLDER / 'rbx-storage.db'
 
-def set_read_only(file_path):
-    os.chmod(file_path, stat.S_IREAD)
+USERS_TO_REMOVE: list[str] = ['Users', 'Everyone', 'Authenticated Users', gp.getuser(), 'Administrators']
 
-appdata_roblox_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'Roblox')
-os.makedirs(appdata_roblox_dir, exist_ok=True)
-file_path = os.path.join(appdata_roblox_dir, "rbx-storage.db")
-
-if is_read_only(file_path):
-    print("rbx-storage.db already exists and is read-only. Skipping download.")
-else:
-    print("Downloading rbx-storage.db...")
+def RollBack() -> None:
     try:
-        kill_roblox_processes()
-        urllib.request.urlretrieve(
-            "https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/rbx-storage.db",
-            file_path
+        with DB_PATH.open('wb') as f:
+            f.write(b'')
+    except OSError:
+        print(
+            'Cannot write to rbx-storage.db file. You probably attempted to run this twice.\n'
+            'Please delete the file manually with admin permissions if you really want to do this.'
         )
-        set_read_only(file_path)
-        print(f"Downloaded and set rbx-storage.db to read-only at {appdata_roblox_dir}")
-    except Exception as e:
-        print(f"Failed to download or replace rbx-storage.db: {e}")
+        return
 
-temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
-os.makedirs(temp_roblox_http_dir, exist_ok=True)
-print(f"Ensured directory exists: {temp_roblox_http_dir}")
+    cmds: list[list[str]] = [
+        ['icacls', str(DB_PATH), '/inheritance:r'],
+    ]
+
+    for user in USERS_TO_REMOVE:
+        cmds.append(['icacls', str(DB_PATH), '/remove', user])
+
+    for cmd in cmds:
+        subprocess.run(cmd, check=True)
+        
+RollBack()
 
 with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
     requirements = response.read().decode('utf-8').splitlines()
