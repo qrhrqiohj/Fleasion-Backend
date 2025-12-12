@@ -12,19 +12,8 @@ temp_roblox_http_dir = os.path.join(os.getenv('TEMP'), 'Roblox', 'http')
 os.makedirs(temp_roblox_http_dir, exist_ok=True)
 print(f"Ensured directory exists: {temp_roblox_http_dir}")
 
-def kill_roblox_processes():
-    print("Killing all Roblox processes...")
-    roblox_processes = [
-        "RobloxPlayerBeta.exe",
-        "RobloxStudioBeta.exe",
-        "RobloxPlayerLauncher.exe"
-    ]
-    for proc in roblox_processes:
-        subprocess.call(['taskkill', '/f', '/im', proc], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 LOCAL_ROBLOX_FOLDER = Path('~/AppData/Local/Roblox').expanduser()
 DB_PATH = LOCAL_ROBLOX_FOLDER / 'rbx-storage.db'
-
 USERS_TO_REMOVE: list[str] = ['Users', 'Everyone', 'Authenticated Users', gp.getuser(), 'Administrators']
 
 def RollBack() -> None:
@@ -47,8 +36,64 @@ def RollBack() -> None:
 
     for cmd in cmds:
         subprocess.run(cmd, check=True)
-        
-RollBack()
+
+def kill_roblox_processes():
+    print("Killing all Roblox processes...")
+    roblox_processes = [
+        "RobloxPlayerBeta.exe",
+        "RobloxStudioBeta.exe",
+        "RobloxPlayerLauncher.exe"
+    ]
+    for proc in roblox_processes:
+        subprocess.call(['taskkill', '/f', '/im', proc], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def check_if_rolled_back(file_path):
+    print(f"Checking: {file_path}...\n")
+
+    if not os.path.exists(file_path):
+        print("File not found.")
+        return
+
+    # 1. Check if the file was wiped (Size should be 0)
+    try:
+        file_size = os.path.getsize(file_path)
+        is_wiped = (file_size == 0)
+    except PermissionError:
+        print("Permission Denied: You cannot read the file properties.")
+        print("This is a strong indicator that permissions were revoked (The script likely ran).")
+        return
+
+    # 2. Check for inheritance using icacls
+    # If the script ran, inheritance was removed using '/inheritance:r'
+    # Standard inherited permissions usually show "(I)" in the icacls output.
+    try:
+        result = subprocess.run(['icacls', file_path], capture_output=True, text=True)
+        # We look for "(I)" which stands for "Inherited". 
+        # If it is missing, inheritance was likely broken.
+        has_inheritance = "(I)" in result.stdout
+    except FileNotFoundError:
+        print("Could not run icacls (Are you on Windows?)")
+        return
+
+    # --- RESULTS ---
+    print(f"File Size: {file_size} bytes")
+    print(f"Inheritance Present: {has_inheritance}")
+    print("-" * 30)
+
+    if is_wiped and not has_inheritance:
+        print("YES. The RollBack script has been run on this file.")
+        print("(The file is empty AND inheritance is disabled).")
+    elif is_wiped and has_inheritance:
+        print("UNCLEAR. The file is empty, but permissions look normal.")
+        print("(The file might have just been created empty or cleared manually).")
+        kill_roblox_processes()
+        RollBack()
+    else:
+        print("NO. The file has data or normal permissions.")
+        kill_roblox_processes()
+        RollBack()
+
+check_if_rolled_back(DB_PATH)
 
 with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/main/requirements.txt") as response:
     requirements = response.read().decode('utf-8').splitlines()
