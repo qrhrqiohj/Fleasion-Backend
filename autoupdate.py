@@ -100,11 +100,19 @@ with urllib.request.urlopen("https://raw.githubusercontent.com/qrhrqiohj/Fleasio
 
 for package in requirements:
     try:
-        subprocess.check_call(["pip", "show", package])
-        print(f"{package} is installed.")
-    except subprocess.CalledProcessError:
-        print(f"{package} is NOT installed. Installing...")
-        subprocess.check_call(["pip", "install", package])
+        try:
+            subprocess.check_call(["pip", "show", package])
+            print(f"{package} is installed.")
+        except subprocess.CalledProcessError:
+            print(f"{package} is NOT installed. Installing...")
+            subprocess.check_call(["pip", "install", package])
+    except FileNotFoundError:
+        try:
+            subprocess.check_call(["python3", "-m", "pip", "show", package])
+            print(f"{package} is installed.")
+        except subprocess.CalledProcessError:
+            print(f"{package} is NOT installed. Installing...")
+            subprocess.check_call(["python3", "-m", "pip", "install", package])
     os.system('cls')
 
 urllib.request.urlretrieve("https://raw.githubusercontent.com/qrhrqiohj/Fleasion-Backend/refs/heads/main/run.bat", "../run.bat")
