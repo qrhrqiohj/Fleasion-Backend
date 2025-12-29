@@ -536,23 +536,24 @@ def cache_down(file_id, game_pre):
 if __name__ == "__main__":
     load_settings()
     background_autolaunch()
-    print(f'>> {Fore.MAGENTA}MOST CHANGES MADE WITH ROBLOX OPEN WILL NOT APPLY UNTIL REJOIN{Style.RESET_ALL} <<\n\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
+    print(f'>> {Fore.MAGENTA}FLEASION IS CURRENTLY DEPRECATED, A NEW AND IMPROVED VERSION IS BEING WORKED ON discord.gg/hXyhKehEZF{Style.RESET_ALL} <<')
+    #print(f'>> {Fore.MAGENTA}MOST CHANGES MADE WITH ROBLOX OPEN WILL NOT APPLY UNTIL REJOIN{Style.RESET_ALL} <<\n\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
     while True:
         game_pre = ""
-        run_option = get_valid_input(f"\nWelcome to: Fleasion!\n"
-                           f"0: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
-                           f"1: {Fore.GREEN}Games{Style.RESET_ALL}\n"
-                           f"2: {Fore.GREEN}Community{Style.RESET_ALL}\n"
-                           f"3: {Fore.GREEN}Presets{Style.RESET_ALL}\n"
-                           f"4: {Fore.GREEN}Previewer{Style.RESET_ALL}\n"
-                           f"5: {Fore.GREEN}Blocker{Style.RESET_ALL}\n"
-                           f"6: {Fore.GREEN}Cache Settings{Style.RESET_ALL}\n"
-                           f"7: {Fore.GREEN}Fleasion Settings{Style.RESET_ALL}\n"
-                           f"8: {Fore.GREEN}Credits{Style.RESET_ALL}\n"
-                           f"Enter which option you want to select.\n: ",
-                           valid_values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
-                           top = True
-        )
+        #run_option = get_valid_input(f"\nWelcome to: Fleasion!\n"
+                           #f"0: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
+                           #f"1: {Fore.GREEN}Games{Style.RESET_ALL}\n"
+                           #f"2: {Fore.GREEN}Community{Style.RESET_ALL}\n"
+                           #f"3: {Fore.GREEN}Presets{Style.RESET_ALL}\n"
+                           #f"4: {Fore.GREEN}Previewer{Style.RESET_ALL}\n"
+                           #f"5: {Fore.GREEN}Blocker{Style.RESET_ALL}\n"
+                           #f"6: {Fore.GREEN}Cache Settings{Style.RESET_ALL}\n"
+                           #f"7: {Fore.GREEN}Fleasion Settings{Style.RESET_ALL}\n"
+                           #f"8: {Fore.GREEN}Credits{Style.RESET_ALL}\n"
+                           #f"Enter which option you want to select.\n: ",
+                           #valid_values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+                           #top = True
+        #)
         try:
             match run_option:
                 case 0:
@@ -1130,5 +1131,6 @@ Enter to return: """
                     )
         except Exception as e:
             print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
+
 
 
