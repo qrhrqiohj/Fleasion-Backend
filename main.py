@@ -540,6 +540,7 @@ if __name__ == "__main__":
     #print(f'>> {Fore.MAGENTA}MOST CHANGES MADE WITH ROBLOX OPEN WILL NOT APPLY UNTIL REJOIN{Style.RESET_ALL} <<\n\nFor news and more resources, check out our discord server!\ndiscord.gg/hXyhKehEZF')
     while True:
         game_pre = ""
+        run_option = get_valid_input()
         #run_option = get_valid_input(f"\nWelcome to: Fleasion!\n"
                            #f"0: {Fore.GREEN}Custom{Style.RESET_ALL}\n"
                            #f"1: {Fore.GREEN}Games{Style.RESET_ALL}\n"
@@ -1131,6 +1132,7 @@ Enter to return: """
                     )
         except Exception as e:
             print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
+
 
 
 
